@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from xgboost.sklearn import XGBClassifier
 import numpy as np
+import pandas as pd
 
 class XgboostFeature():
       ##可以传入xgboost的参数
@@ -22,13 +23,13 @@ class XgboostFeature():
           self.reg_lambda=reg_lambda
           self.seed=seed
           print 'Xgboost Feature start, new_feature number:',n_estimators
-      def mergeToOne(self,X,X2):
-          X3=[]
-          for i in xrange(X.shape[0]):
-              tmp=np.array([list(X[i]),list(X2[i])])
-              X3.append(list(np.hstack(tmp)))
-          X3=np.array(X3)
-          return X3
+#       def mergeToOne(self,X,X2):
+#           X3=[]
+#           for i in xrange(X.shape[0]):
+#               tmp=np.array([list(X[i]),list(X2[i])])
+#               X3.append(list(np.hstack(tmp)))
+#           X3=np.array(X3)
+#           return X3
       ##切割训练
       def fit_model_split(self,X_train,y_train,X_test,y_test):
           ##X_train_1用于生成模型  X_train_2用于和新特征组成新训练集合
@@ -75,14 +76,17 @@ class XgboostFeature():
                  reg_lambda=self.reg_lambda,
                  seed=self.seed)
           clf.fit(X_train, y_train)
-          y_pre= clf.predict(X_test)
-          y_pro= clf.predict_proba(X_test)[:,1]
-          print "pred_leaf=T  AUC Score : %f" % metrics.roc_auc_score(y_test, y_pro)
-          print"pred_leaf=T  Accuracy : %.4g" % metrics.accuracy_score(y_test, y_pre)
-          new_feature= clf.apply(X_train)
-          X_train_new=self.mergeToOne(X_train,new_feature)
+#           y_pre= clf.predict(X_test)
+#           y_pro= clf.predict_proba(X_test)[:,1]
+#           print "pred_leaf=T  AUC Score : %f" % metrics.roc_auc_score(y_test, y_pro)
+#           print"pred_leaf=T  Accuracy : %.4g" % metrics.accuracy_score(y_test, y_pre)
+#           X_train_new=self.mergeToOne(X_train,new_feature)
+          new_feature = pd.DataFrame(new_feature.reshape((-1, self.n_estimators)))
+          X_train_new=X_train.join(new_feature)
           new_feature_test= clf.apply(X_test)
-          X_test_new=self.mergeToOne(X_test,new_feature_test)
+#           X_test_new=self.mergeToOne(X_test,new_feature_test)
+          new_feature_test = pd.DataFrame(new_feature_test.reshape((-1, self.n_estimators)))
+          X_test_new=X_test.join(new_feature_test)
           print "Training set sample number remains the same"
           return X_train_new,y_train,X_test_new,y_test
 
